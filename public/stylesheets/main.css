@@ -1,0 +1,272 @@
+
+<!--CSS goes in the document HEAD or added to your external stylesheet --> 
+<style type="text/css">
+
+xyz {
+		border-width: 0px;
+}
+
+body {
+	background-color: rgba(224,255,224,1);	
+	font-family: calibri, tahoma, arial, sans-serif;
+	color: black;
+	font-size: 1rem;
+	
+}
+
+a {
+	text-decoration: none;
+	font-weight: normal;
+	color: darkblue;
+}
+
+table.gridtable {
+	font-family: calibri, tahoma, arial, sans-serif;
+	font-size: 1rem;
+	color: #333333;
+	border-width: 0px;
+	border-color: #666666;
+	border-collapse: collapse;
+}
+
+table.gridtable th {
+	border-width: 0px;
+	padding: 3px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #dedede;
+}
+
+table.gridtable td {
+	border-width: 0px;
+	padding: 3px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #ffffff;
+}
+
+dialog {
+	width: 500px;
+	background: #e8e8e8;
+	border: 1px solid #dadada;
+	font-family: sans-serif;
+	padding: 5px 10px 20px 20px;
+}
+
+*.date {
+	font-size: 0.8rem;
+	color: grey;
+}
+
+div.comment {
+	font-size: 1rem;
+}
+
+
+
+
+*.footnote {
+	font-size: 0.8rem;
+	color: grey;
+}
+
+*.replybutton {
+	font-size: 0.9rem;
+}
+
+*.reportbutton {
+	font-size: 0.9rem;
+}
+
+*.commentbutton {
+	font-size: 0.9rem;
+
+}
+
+*.whlbutton {
+	font-size: 0.9rem;
+}
+
+*.title {
+	font-size: 1rem;
+}
+
+span.title.linkrank1 {
+	font-size: 1rem;
+	font-weight: bold;
+}
+
+*.commentcount {
+	font-size: 0.9rem;
+}
+
+*.author {
+	font-size: 0.8rem;
+	color: grey;
+}
+
+div.formentry {
+	font-size: 1rem;
+}
+
+textarea {
+	width: 95%;
+}
+
+hr {
+	width: 100%;
+	color: #ccc;
+	background-color: #ccc;
+	height: 1px;
+	align: left;
+	border-top: 0px solid #8c8b8b;
+	border-bottom: 0px solid #fff;
+	margin: 0.5rem 0rem 0rem 0rem;
+	padding: 0px;
+}
+
+dl, dt, dd {
+	margin: 0rem;
+	padding: 0rem;
+}
+
+dd {
+	margin-left: 1rem;
+}
+
+*.replyicon {
+	width: 0.7rem;
+	height: 0.7rem;
+}
+
+*.linkouticon {
+	width: 0.7rem;
+	height: 0.7rem;
+}
+
+*.addicon {
+	width: 0.6rem;
+	height: 0.6rem;
+}
+
+*.menuicon {
+	width: 1rem;
+	height: 1rem;
+}
+
+*.flagicon, *.searchicon, *.observeicon, *.addfileicon, *.commenticon {
+	width: 0.7rem;
+	height: 0.7rem;
+}
+
+div.toggle, div.topicblock, div.commentblock {
+	background-color: white;
+	border-style: solid;
+	border-color: orange orange orange orange;
+	border-width: 1px 1px 1px 0.2rem;
+	margin: 0.2rem 0rem 0.0rem 0rem;
+	border-radius: 0.5rem;
+	padding: 0rem 0rem 0rem 0rem;
+	box-shadow: -0.2rem 0.2rem 0.2rem #ccc;
+}
+
+div.commentblock {
+	display: inline-block;
+}
+
+div.toggle  {
+	display: none;
+}
+
+div#menu {
+	position: fixed;
+	z-index: 1;
+	right: 1rem;
+	top: 1rem;
+	width: 3.5rem;
+	height: 8rem;
+	mmargin-top: -2.5em;
+}
+
+div#toggleBy-pulldownmenu {
+	display: none;
+	border: 0px solid #ccc;
+	margin: 0rem;
+	padding: 0rem;
+	float: right;
+}
+
+#footer {
+	position: fixed;
+	z-index: 1;
+	left: 0rem;
+	bottom: 0rem;
+	width: 100%;
+	height: 1rem;
+	mmargin-top: -2.5em;
+	font-family: calibri, tahoma, arial, sans-serif;
+	background-color: lightgrey;
+}
+
+td.menuitem {
+	background-color: #eee;
+	border: 1px solid #888;
+	padding: 0.5rem;
+}
+
+a.menuitem {
+	font-size: 1.6rem;
+	color:black;
+}
+
+table.menu {
+	margin: 0rem;
+	padding: 0rem;
+	border: 0px solid #888;
+	border-collapse: collapse;
+}
+
+div#pulldownmenubutton {
+	text-align: right;
+}
+
+div.searchform {
+	width: 80%;
+}
+
+img.logo {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+
+input.search {
+	width: 60%;
+}
+
+input[type="text"] {
+	width: 60%;
+}
+
+span.columndata, span.columnname {
+	font-family: calibri, tahoma, arial, sans-serif;
+	font-size: 0.9rem;
+	color: black;
+}
+
+span.columnname {
+	font-weight: bold;
+}
+
+a.linkurl {
+	color:blue;
+}
+
+
+a.whlbutton.activate {
+	color:red;
+}
+
+
+
+
+</style>
