@@ -62,8 +62,8 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
         req = req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", "abc"), ("query", chatMsg))
         Logger.info("INFO 20170424204901 req=" + req.toString())
         val futureResponse = req.get()
-
-        futureResponse.map(wsResponse => Ok(views.html.chat.POC(chatMsg, wsResponse.body)))
+    //    futureResponse.map(wsResponse => Ok(views.html.chat.POC(chatMsg,  wsResponse.body)))
+        futureResponse.map(wsResponse => Ok(views.html.chat.POC(chatMsg, ( wsResponse.json \"result" \  "fulfillment" \ "speech").as[String])))
       }
     }
   }

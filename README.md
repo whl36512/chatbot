@@ -59,3 +59,15 @@ Production Deployment
 
 - $my-first-app-1.0/bin/my-first-app -Dplay.crypto.secret=mysecret
 
+Production Deployment using Docker
+==================================
+- $sbt universal:packageZipTarball
+- scp ~/chatbot/target/universal/chatbot-1.1-SNAPSHOT.tgz ec2-user@54.214.124.241:.
+- Login to ec2 as root
+- cp ~ec2-user/chatbot-1.1-SNAPSHOT.tgz ~/dockerfiles/chatbot/.
+- cd dockerfiles/chatbot/
+- tar xvf chatbot-1.1-SNAPSHOT.tgz
+- cp chatbot-1.1-SNAPSHOT/conf/dockerfiles/chatbot.docker ~/dockerfiles/chatbot/.
+- docker build  --rm -t local/chatbot -f chatbot.docker .
+docker run --privileged --name chatbot   --network=my-net --ip='10.0.0.10'  -p 80:9000 -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/chatbot  # --privileged is requred by sshd and postgresql
+

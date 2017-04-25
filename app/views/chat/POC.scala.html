@@ -7,10 +7,10 @@
 <dl>
     <dt><label for="title">Chat Message</label></dt>
     <dd>
-    	<textarea id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" > </textarea>
+    	<input type=text id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" > </input>
     	<br/>
     	
-    	<input type="submit" value="Submit" />
+    	<input type="submit" value="Send" />
     	
 	</dd>
 </dl>
@@ -22,9 +22,13 @@
 <dl >
 	<dt>Automatic Chat Response</dt>
     <dd>
-    I said: @chatMsg 
-    <p/>
-    Auto Response:	@autoResponse
+    <div class=commentblock>
+    <div style="white-space: pre-line" class=comment>@chatMsg </div>
+     </div>
+     <br/>
+ <div class=commentblock>
+    <div style="white-space: pre-line" class=comment>@autoResponse</div>
+ </div>
 	</dd>
 </dl>
 
