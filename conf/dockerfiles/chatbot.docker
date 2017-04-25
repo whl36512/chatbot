@@ -1,0 +1,17 @@
+FROM local/centos7-systemd
+MAINTAINER "you" <your@email.here>
+ENV container docker
+
+RUN yum install -y java
+ADD ./chatbot-1.1-SNAPSHOT.tgz /root/.
+RUN ln -s /root/chatbot-1.1-SNAPSHOT /root/chatbot
+RUN cp /root/chatbot/conf/systemd/chatbot.service /lib/systemd/system/.
+RUN systemctl enable chatbot.service
+EXPOSE 9000
+
+#docker build -f vent.docker --rm -t local/vent .
+#docker network create -d bridge --subnet 10.0.0.0/16 --gateway 10.0.0.1 my-net     # must use --subnet option, so next run command can use --ip option
+#docker run --privileged --name vent  --network my-net --ip=10.0.0.10 -p 80:9000 -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/vent  # --privileged is requred by sshd and postgresql
+#docker stop   centos7
+#docker rm   centos7
+#docker rmi local/centos7-systemd

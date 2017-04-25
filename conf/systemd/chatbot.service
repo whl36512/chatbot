@@ -1,0 +1,11 @@
+[Unit]
+Description=Chatbot Service
+     
+[Service]
+ExecStart=/root/chatbot/bin/chatbot -Dplay.crypto.secret=mysecret
+StandardOutput=/var/log/chatbot.log
+     
+[Install]
+WantedBy=multi-user.target
+Alias=chatbot.service
+
