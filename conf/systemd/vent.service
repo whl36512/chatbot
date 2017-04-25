@@ -1,0 +1,11 @@
+[Unit]
+Description=Vent Service
+     
+[Service]
+ExecStart=/root/vent/bin/vent -Dplay.crypto.secret=mysecret
+StandardOutput=/var/log/vent.log
+     
+[Install]
+WantedBy=multi-user.target
+Alias=vent.service
+

@@ -1,0 +1,171 @@
+package models
+
+import scala.concurrent.Future
+
+import javax.inject.Inject
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import slick.driver.JdbcProfile
+import java.sql.Timestamp
+import java.util.UUID
+import scala.util.{Success, Failure}
+
+//import play.api.db._
+import play.api.data._
+import play.api.data.Forms._
+import slick.jdbc.GetResult
+
+//import play.api.libs.ws.WSRequest
+//import play.api.libs.ws.WSClient
+//import scala.concurrent.ExecutionContext
+//import scala.concurrent.ExecutionContext.Implicits.global
+//import scala.concurrent.Await
+
+//class CatDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
+//  import driver.api._
+//
+//  private val Cats = TableQuery[CatsTable]
+//
+//  def all(): Future[Seq[Cat]] = db.run(Cats.result)
+//
+//  def insert(cat: Cat): Future[Unit] = db.run(Cats += cat).map { _ => () }
+//
+//  private class CatsTable(tag: Tag) extends Table[Cat](tag, "CAT") {
+//
+//    def name = column[String]("NAME", O.PrimaryKey)
+//    def color = column[String]("COLOR")
+//
+//    def * = (name, color) <> (Cat.tupled, Cat.unapply _)
+//  }
+//}
+
+// link_id    
+// topic_id   
+// title      
+// publish_ts 
+// create_ts  
+// author     
+// url       
+
+case class Link(linkId: String, topicId: String, title: String, publishTS: String, createTS: String, author: String, url: String)
+{
+  def insertTo (dbConfigProvider: DatabaseConfigProvider) = {
+    val linkDAO = new LinkDAO(dbConfigProvider)
+    val r= linkDAO.insert(this)
+    r
+  }
+  
+}
+
+
+class LinkDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
+  import driver.api._
+
+  private val links = TableQuery[LinkTable]
+
+  def all(): Future[Seq[Link]] = db.run(links.result)
+
+  //def insert(link: Link): Future[Unit] = db.run(links += link).map { _ => () }
+  def insert(c: Link) : DBIO[Int] = sqlu"insert into link(title, publish_ts, author, url) values (${c.title}, ${c.publishTS}, ${c.author}, ${c.url})"
+//  def select(c: Link) = {
+//    val result= dbConfig.db.run(links.filter(_.url === c.url).result)
+//    val r= result.collect
+//    
+//
+//  }
+  
+  def selectAll = {
+    var links : Seq[Link] = null 
+    val f= all()
+    val nothing = f.onComplete {
+      case Success(r) => links=r
+      case Failure(t) => throw  new Exception("ERROR! WHL:" + t.getMessage)
+    }
+    if (links==null) throw new Exception ("ERROR: WHL: no row returned")
+    links
+  }
+  
+    def selectAll2 = {
+       implicit val getResult = GetResult(r => Link(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+       val query =  sql"select * from link".as[Link]
+       val f = db.run(query)
+       var links : Vector[Link] = null 
+
+       val nothing = f.onComplete {
+         case Success(r) => links = r
+         case Failure(t) => throw  new Exception("ERROR! WHL:" + t.getMessage)
+    }
+    if (links==null) throw new Exception ("ERROR: WHL: no row returned")
+    links
+  }
+
+  
+  private class LinkTable(tag: Tag) extends Table[Link](tag, "link") {
+    // table name and column names must be lower case. Otherwise Slick will not find the table or columns
+    def linkId = column[String]("link_id", O.PrimaryKey)
+    def topicId = column[String]("topic_id")
+    def title = column[String]("title")
+    def publishTS = column[String]("publish_ts")
+    def createTS = column[String]("create_ts")
+    def author = column[String]("author")
+    def url = column[String]("url")
+
+    def * = (linkId, topicId, title, publishTS, createTS, author, url) <> (Link.tupled, Link.unapply _)
+  }
+}
+
+object LinkForm {
+  val form = Form(
+    mapping(
+      "linkId" -> ignored(""), "topicId" -> ignored(""), "title" -> text(), "publishTS" -> text(), "createTS" -> ignored(""), "author" -> text(), "url" -> nonEmptyText(minLength = 20))(Link.apply)(Link.unapply))
+}
+
+
+
+
+
+case class TestTable (a: String, b:String)
+class TestTableDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
+  import driver.api._
+
+  private val rows = TableQuery[TestTableTable]
+
+  def all(): Future[Seq[TestTable]] = db.run(rows.result)
+
+  def selectAll = {
+    var results : Seq[TestTable] = null 
+    val f= all()
+    val nothing = f.onComplete {
+      case Success(r) => results = r
+      case Failure(t) => throw  new Exception("ERROR! WHL:" + t.getMessage)
+    }
+    if (results==null) throw new Exception ("ERROR: WHL: no row returned")
+    results
+  }
+  
+    def selectAll2 = {
+       implicit val getResult = GetResult(r => TestTable(r.<<, r.<<))
+       val query =  sql"select * from link".as[TestTable]
+       val f = db.run(query)
+       var results : Vector[TestTable] = null 
+
+       val nothing = f.onComplete {
+         case Success(r) => results = r
+         case Failure(t) => throw  new Exception("ERROR! WHL:" + t.getMessage)
+    }
+    if (results==null) throw new Exception ("ERROR: WHL: no row returned")
+    results
+  }
+
+  
+  private class TestTableTable(tag: Tag) extends Table[TestTable](tag, "testtable") {
+    // table name and column names must be lower case. Otherwise Slick will not find the table or columns
+    def a = column[String]("a")
+    def b = column[String]("b")
+
+    def * = (a, b ) <> (TestTable.tupled, TestTable.unapply _)
+  }
+}
+
+

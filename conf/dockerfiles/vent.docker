@@ -1,0 +1,17 @@
+FROM local/centos7-systemd
+MAINTAINER "you" <your@email.here>
+ENV container docker
+
+RUN yum install -y java
+ADD ./vent-1.2-SNAPSHOT.tgz /root/.
+RUN ln -s /root/vent-1.2-SNAPSHOT /root/vent
+RUN cp /root/vent/conf/systemd/vent.service /lib/systemd/system/.
+RUN systemctl enable vent.service
+EXPOSE 9000
+
+#docker build -f vent.docker --rm -t local/vent .
+#docker network create -d bridge --subnet 10.0.0.0/16 --gateway 10.0.0.1 my-net     # must use --subnet option, so next run command can use --ip option
+#docker run --privileged --name vent  --network my-net --ip=10.0.0.10 -p 80:9000 -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/vent  # --privileged is requred by sshd and postgresql
+#docker stop   centos7
+#docker rm   centos7
+#docker rmi local/centos7-systemd

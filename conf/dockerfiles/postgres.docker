@@ -1,0 +1,35 @@
+FROM local/centos7-systemd
+MAINTAINER "Weihan Lin" <whl36512@gmail.com>
+ENV container docker
+
+RUN yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-redhat96-9.6-3.noarch.rpm
+RUN yum -y groupinstall "PostgreSQL Database Server 9.6 PGDG"
+
+#RUN yum -y install postgresql-server  # this will not install latest version
+#RUN yum -y install postgresql-contrib # this will not install latest version
+
+EXPOSE 5432
+
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/usr/sbin/init"]
+
+
+#docker build -f postgres.docker --rm -t local/postgres .
+#docker run --privileged --name pgsql  -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/postgres  # --privileged is requred by sshd and postgresql
+#docker stop   pgsql
+#docker rm   pgsql
+#docker rmi local/postgres
+
+#Once inside, run the following to setup database
+#/usr/pgsql-9.6/bin/postgresql96-setup initdb
+# find files pg_hba.conf and postgresql.conf
+##/var/lib/pgsql/data/pg_hba.conf
+##local   all         postgres                    ident  # allow user postgres to login without password
+##local   all         all                               md5   # allow connect on UNIX socket with password
+##host    all         all         0.0.0.0/0       md5   #allow TCP connection from anywhere with password
+##host sameuser all       0.0.0.0/0       md5  # alow user access database with same user name
+##host samerole  all       0.0.0.0/0       md5  # alow user access database with same user name
+##host samerole  all       0.0.0.0/0       md5  # alow user access database with same user name
+
+##cat “listen_addresses = '*'    # listen on all interfaces’ >> /var/lib/pgsql/data/postgresql.conf
+##su postgres -c '/usr/pgsql-9.6/bin/postgres -D /var/lib/pgsql/9.6/data' &

@@ -1,0 +1,31 @@
+@(chatMsg:String, autoResponse: String)(implicit request: RequestHeader, m: Messages)
+
+@main("ChatBot POC") {
+
+<form action="/chat" method="POST" >
+    
+<dl>
+    <dt><label for="title">Chat Message</label></dt>
+    <dd>
+    	<textarea id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" > </textarea>
+    	<br/>
+    	
+    	<input type="submit" value="Submit" />
+    	
+	</dd>
+</dl>
+
+
+
+</form>
+<p/>
+<dl >
+	<dt>Automatic Chat Response</dt>
+    <dd>
+    I said: @chatMsg 
+    <p/>
+    Auto Response:	@autoResponse
+	</dd>
+</dl>
+
+}

@@ -1,0 +1,114 @@
+@*
+ * This template is called from the `index` template. This template
+ * handles the rendering of the page header and body tags. It takes
+ * two arguments, a `String` for the title of the page and an `Html`
+ * object to insert into the body of the page.
+ *@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        @* Here's where we render the page title `String`. *@
+        <title>@title</title>
+        <meta name="description" content=" " />
+        <meta name="viewport" content="initial-scale=1">
+        
+        
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+        <link rel="icon" type="image/svg" href="@routes.Assets.versioned("images/bullhorn.png")">
+        <script src="@routes.Assets.versioned("javascripts/hello.js")" type="text/javascript"></script>
+        
+    </head>
+    <body>
+    
+        @* And here's where we render the `Html` object containing
+         * the page content. *@
+        @content
+        <br/>
+        <br/>
+        <br/>
+        
+        
+    </body>
+</html>
+
+@footer = {
+	<div id=footer>
+    </div> 
+        
+   } 
+   
+@materializecssheader = {
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="msapplication-tap-highlight" content="no">
+    <!-- Favicons-->
+    <link rel="apple-touch-icon-precomposed" href="images/favicon/apple-touch-icon-152x152.png">
+    <meta name="msapplication-TileColor" content="#FFFFFF">
+    <meta name="msapplication-TileImage" content="images/favicon/mstile-144x144.png">
+    <link rel="icon" href="images/favicon/favicon-32x32.png" sizes="32x32">
+    <!--  Android 5 Chrome Color-->
+    <meta name="theme-color" content="#EE6E73">
+    <!-- CSS-->
+    <link href="http://materializecss.com/css/prism.css" rel="stylesheet">
+    <link href="http://materializecss.com/css/ghpages-materialize.css" type="text/css" rel="stylesheet" media="screen,projection">
+    <link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script>
+      window.liveSettings = {
+        api_key: "a0b49b34b93844c38eaee15690d86413",
+        picker: "bottom-right",
+        detectlang: true,
+        dynamic: true,
+        autocollect: true
+      };
+    </script>
+    <script src="//cdn.transifex.com/live.js"></script>
+}
+
+@pulldownmenu = {
+<div id=menu>
+	<div id=pulldownmenubutton>
+	<a  onclick='toggleDisply("pulldownmenu");' href="#/" class="whlbutton" >
+	    				<img src="/assets/images/menu-button-of-three-horizontal-lines.svg" alt="Menu" title="menu" class="menuicon" />
+	</a>
+	</div>	
+	<div id="toggleBy-pulldownmenu"  class="toggle"  >
+	<table class=menu >
+		<tr>
+			<td class="menuitem"><a href="/" class="menuitem" >Home</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="menuitem"><a href="/about" class="menuitem">About</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="menuitem"><a href="/terms" class="menuitem">Legal&nbsp;</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="menuitem"><a href="/credit" class="menuitem" target="_blank">Credit</a>
+			</td>
+		</tr>
+	</table>
+	</div>
+	
+</div>
+}
+
+
+@searchform = {
+<div class=searchform>
+<form action="/" method="GET" class=search>
+<a href="/" ><img src="/assets/images/bullhorn.svg"  class="logo" /><img src="/assets/images/bullhorn.svg"  class="logo" /><img src="/assets/images/bullhorn.svg"  class="logo" /></a>	
+&nbsp;
+    	<input type="text" name="searchQuery"  placeholder="Search Articles" class=search />
+		<button type="submit" > <img src="/assets/images/magnifier-tool.svg" alt="Search" title="Search" class="searchicon" />
+		</button>
+	   
+</form>
+</div>
+}

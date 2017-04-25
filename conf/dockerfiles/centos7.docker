@@ -1,0 +1,31 @@
+FROM centos:7
+MAINTAINER "you" <your@email.here>
+ENV container docker
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+rm -f /lib/systemd/system/multi-user.target.wants/*;\
+rm -f /etc/systemd/system/*.wants/*;\
+rm -f /lib/systemd/system/local-fs.target.wants/*; \
+rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+rm -f /lib/systemd/system/basic.target.wants/*;\
+rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+# all above will enable systemd
+RUN yum groups mark convert
+
+RUN yum clean all; yum -y install passwd; echo root | passwd --stdin root ; yum -y install httpd openssh-server openssh-clients initscripts;  echo 'set -o vi' >> /etc/profile; chkconfig sshd on ; chkconfig httpd on ;echo 'export TERM=linux' >> /etc/profile
+
+
+EXPOSE 22
+EXPOSE 80
+
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/usr/sbin/init"]
+
+
+#docker build -f centos7.docker --rm -t local/centos7-systemd .
+#docker run --privileged --name centos7  -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/centos7-systemd  # --privileged is requred by sshd and postgresql
+#docker stop   centos7
+#docker rm   centos7
+#docker rmi local/centos7-systemd

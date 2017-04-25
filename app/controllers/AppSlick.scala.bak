@@ -1,0 +1,131 @@
+//package controllers
+//
+//import dbConfig.driver.api._
+//
+//package controllers
+//
+//import javax.inject._
+//
+//import play.api._
+//import play.api.mvc._
+//import play.api.i18n._
+//
+//import play.api.db._
+//import play.api.data._
+//import play.api.data.Forms._
+//import models.Topic
+//import play.api.i18n.I18nSupport
+//import play.api.i18n.DefaultMessagesApi
+//import play.api.i18n.DefaultLangs
+//import play.api.libs.ws.WSClient
+//
+///**
+// * This controller creates an `Action` to handle HTTP requests to the
+// * application's home page.
+// */
+//@Singleton
+//class AppSlick @Inject() (dbConfigProvider: DatabaseConfigProvider, implicit val messagesApi: MessagesApi, implicit val db: Database, implicit val ws: WSClient)
+//    extends Controller with I18nSupport {
+//
+//  val dbConfig = dbConfigProvider.get[JdbcProfile]
+//
+////  def testDB(name: String) = Action.async { implicit request =>
+////    val resultingUsers: Future[Seq[User]] = dbConfig.db.run(Users.filter(_.name === name).result)
+////    resultingUsers.map(users => Ok(views.html.index(users)))
+////  }
+//  
+//  
+//
+//}
+
+package controllers
+
+import javax.inject._
+
+import play.api._
+import play.api.mvc._
+import play.api.i18n._
+
+//import play.api.db._
+import play.api.data._
+import play.api.data.Forms._
+//import models.Topic
+import play.api.i18n.I18nSupport
+import play.api.i18n.DefaultMessagesApi
+import play.api.i18n.DefaultLangs
+import play.api.libs.ws.WSClient
+//import dbConfig.driver.api._
+
+import play.api.db.slick.DatabaseConfigProvider
+//import play.api.db.slick.HasDatabaseConfigProvider
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import slick.driver.JdbcProfile
+import models._
+import models.LinkDAO
+
+/**
+ * This controller creates an `Action` to handle HTTP requests to the
+ * application's home page.
+ */
+@Singleton
+class AppSlick @Inject() (implicit dbConfigProvider: DatabaseConfigProvider,implicit val messagesApi: MessagesApi, implicit val ws: WSClient)
+    extends Controller with I18nSupport {
+
+  /**
+   * Create an Action to render an HTML page with a welcome message.
+   * The configuration in the `routes` file means that this method
+   * will be called when the application receives a `GET` request with
+   * a path of `/`.
+   */
+  val dbConfig = dbConfigProvider.get[JdbcProfile]
+
+  def todo = TODO
+
+  def echo = Action { request =>
+    Ok("Got request [" + request + "]")
+  }
+
+  def index = Action {
+    Ok(views.html.index("Your new application is ready."))
+  }
+
+  def topicList = Action { request =>
+    //Ok("Got request [" + request + "]")
+    Ok(views.html.topiclist(dbConfigProvider))
+  }
+  
+  def newTopic = Action{ implicit request =>
+    Ok(views.html.newtopicform(LinkForm.form))
+  }
+    def newTopicGet = Action { request =>
+    Ok("Got request [" + request + "]")
+  }
+  def newTopicPost = Action { implicit request =>
+    
+    LinkForm.form.bindFromRequest.fold(
+      formWithErrors => {
+        // binding failure, you retrieve the form containing errors:
+        BadRequest(views.html.newtopicform(formWithErrors))
+        //BadRequest("Bad Request")
+        
+      },
+      link => {
+        /* binding success, you get the actual value. */
+        /* flashing uses a short lived cookie */
+        val a= link.insertTo(dbConfigProvider)
+        //Ok("this is the url return ->"+link.toString)
+        Redirect(routes.AppSlick.newTopic()).flashing("success" -> ("Successful " + link.toString+ a.toString))
+      })
+  }
+}
+
+//  def createTopicPostWithErrors = Action(parse.form(createTopicForm, onErrors =
+//    (formWithErrors: Form[CTopicData) => BadRequest(views.html.createTopic(formWithErrors)))) { implicit request =>
+//    val topicData = request.body
+//    val newTopic = models.User(topicData.url)
+//    val id = models.User.create(newUser)
+//    Redirect(routes.Application.home(id))
+//  }
+
+
+
