@@ -69,5 +69,5 @@ Production Deployment using Docker
 - tar xvf chatbot-1.1-SNAPSHOT.tgz
 - cp chatbot-1.1-SNAPSHOT/conf/dockerfiles/chatbot.docker ~/dockerfiles/chatbot/.
 - docker build  --rm -t local/chatbot -f chatbot.docker .
-docker run --privileged --name chatbot   --network=my-net --ip='10.0.0.10'  -p 80:9000 -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/chatbot  # --privileged is requred by sshd and postgresql
+- docker run --privileged --name chatbot   --network=my-net --ip='10.0.0.10'  -p 80:9000 -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/chatbot  # --privileged is requred by sshd and postgresql
 
