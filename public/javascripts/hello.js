@@ -40,8 +40,8 @@ function alertContents(httpRequest) {
 	
 	if (httpRequest.readyState === XMLHttpRequest.DONE) {
 		if (httpRequest.status === 200) {
-			alert(httpRequest.responseText);
-			window.location.reload(true); 
+			console.log("INFO 20170507183901 httpRequest.responseText=" + httpRequest.responseText);
+			//window.location.reload(true); 
 			
 		} 
 		else {
@@ -49,6 +49,8 @@ function alertContents(httpRequest) {
 		}
 	}
 }
+
+
 
 function submitForm(oFormElement, validateFunc)
 {
@@ -58,7 +60,7 @@ function submitForm(oFormElement, validateFunc)
 	if (formData==null) return false ;
 	var urlEncoded=urlEncodedData(formData);
 	var xhr = new XMLHttpRequest();
-	// console.log("encodedData="+urlEncoded)
+	console.log("encodedData="+urlEncoded)
 	
 	xhr.onreadystatechange = function(){ alertContents(xhr); } ;	
 	xhr.open (oFormElement.method, oFormElement.action, true);
@@ -95,7 +97,7 @@ function validateCommentForm(formData)
 	return formData;
 }
 
-function validateTopicForm(formData)
+function validateChatForm(formData)
 {
 	return formData;
 }

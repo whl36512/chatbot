@@ -1,4 +1,11 @@
-@(chatMsg:String, autoResponse: String)(implicit request: RequestHeader, m: Messages)
+@import play.api.libs.ws.WSResponse ; var parsedResponse: Array[String] =null;
+
+
+
+@(chatMsg:String, autoResponse: WSResponse)(implicit request: RequestHeader, m: Messages)
+
+
+
 
 @main("ChatBot POC") {
 
@@ -7,12 +14,11 @@
 <dl>
     <dt><label for="title">Chat Message</label></dt>
     <dd>
-    	<input type=text id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" > </input>
+    	<input type=text id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" /> 
     	<br/>
-    	
-    	<input type="submit" value="Send" />
-    	
-	</dd>
+    	<input type=submit value=Send name=submit />
+    	<iinput type="button" name="submit" value="Send" onClick="submitForm(this.parentNode, validateChatForm);" />
+    </dd>
 </dl>
 
 
@@ -21,15 +27,36 @@
 <p/>
 <dl >
 	<dt>Automatic Chat Response</dt>
-    <dd>
-    <div class=commentblock>
-    <div style="white-space: pre-line" class=comment>@chatMsg </div>
-     </div>
-     <br/>
- <div class=commentblock>
-    <div style="white-space: pre-line" class=comment>@autoResponse</div>
- </div>
-	</dd>
+	@showResponse
+
 </dl>
 
+}
+
+@showResponse = {
+	@if( autoResponse != null) {
+	@{parsedResponse = parseWSResponse (autoResponse)}
+	
+	<dd>
+	
+    <div class=commentblock>
+    	<div style="white-space: pre-line" class=comment>me: @chatMsg </div>
+    </div>
+    <br/>
+   	<div class=commentblock >
+    	<div style="white-space: pre-line" class=comment>chatbot: @parsedResponse(0) </div>
+    	@if(parsedResponse(1)!=null) {
+    		<img src="@parsedResponse(1)"  style="height:228px;">
+    	}
+ 	</div>
+	</dd>
+ 	}
+ 	
+} 
+
+@parseWSResponse(wsResponse: WSResponse)  = @{
+	val imgURLSeq = wsResponse.json \ "result" \ "fulfillment" \ "messages" \\ "image"
+    val imgURL = { if (imgURLSeq.length == 1) { imgURLSeq(0).as[String] } else { null } }
+    val chatResponse = (( wsResponse.json \ "result" \ "fulfillment" \ "speech").as[String])
+    Array(chatResponse, imgURL)
 }
