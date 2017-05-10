@@ -19,4 +19,5 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 
 GET     /chat                   		controllers.AsyncController.chat
 POST    /chat                   		controllers.AsyncController.chat
+POST    /chat/ws                   		controllers.AsyncController.chatws
 

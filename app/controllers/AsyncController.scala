@@ -14,6 +14,9 @@ import play.api.i18n.I18nSupport
 import play.api.i18n.MessagesApi
 import org.apache.commons.codec.digest.DigestUtils
 import scala.util.Random
+import play.api.libs.json._
+import play.api.libs.json.Reads._ // Custom validation helpers
+import play.api.libs.functional.syntax._ // Combinator syntax
 
 /**
  * This controller creates an `Action` that demonstrates how to write
@@ -50,7 +53,7 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
 
   def chat = Action.async { implicit request =>
     val queryString = request.body.asFormUrlEncoded
-    val sessionId =request.session.get("sessionId").getOrElse( DigestUtils.md5Hex(Random.nextLong.toHexString) )
+    val sessionId = request.session.get("sessionId").getOrElse(DigestUtils.md5Hex(Random.nextLong.toHexString))
     var chatMsg = ""
     queryString match {
       case None => Future { Ok(views.html.chat.POC(chatMsg, null)).withSession(request.session + ("sessionId" -> sessionId)) }
@@ -60,14 +63,35 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
         Logger.info("INFO 20170424204601 chatMsg=" + chatMsg)
 
         var req: WSRequest = ws.url(apiAiUrl)
-        Logger.info("INFO 20170424084701 sessionId=" + sessionId+ " req = " + req.url)
+        Logger.info("INFO 20170424084701 sessionId=" + sessionId + " req = " + req.url)
         req = req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
         Logger.info("INFO 20170424204901 req=" + req.toString())
         val futureResponse = req.get()
         futureResponse.map(wsResponse => {
-          Ok(views.html.chat.POC(chatMsg, wsResponse)).withSession(request.session + ("sessionId" -> sessionId)) 
+          Ok(views.html.chat.POC(chatMsg, wsResponse)).withSession(request.session + ("sessionId" -> sessionId))
         })
       }
+    }
+  }
+
+  implicit val rds = (
+    (JsPath \\ 'chatMsg).read[String] and
+    (JsPath \ 'sessionId).read[String]) tupled
+
+  def chatws = Action.async(parse.json) { implicit request =>
+    val a=  request.body.validate[(String, String)]
+    a.map{ 
+      case (chatMsg, sessionId) =>
+        Logger.info("INFO 20170509220301 sessionId=" + sessionId + " chatMsg= " + chatMsg)
+        var req: WSRequest = ws.url(apiAiUrl)
+        req=req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
+                Logger.info("INFO 20170424204901 req=" + req.toString())
+        val futureResponse = req.get()
+        futureResponse.map(wsResponse =>
+          Ok(wsResponse.json)
+        )      
+    }.recoverTotal{
+      e => Future{BadRequest("ERROR 20170509215901 " + JsError.toJson(e))}
     }
   }
 }
