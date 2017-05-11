@@ -266,7 +266,17 @@ a.whlbutton.activate {
 	color:red;
 }
 
+div.sentiment-neg {
+	color:red;
+}
 
+div.sentiment-pos {
+	color:#00bb00;
+}
+
+div.sentiment-neutral {
+	color:#bbbb00;
+}
 
 
 </style>

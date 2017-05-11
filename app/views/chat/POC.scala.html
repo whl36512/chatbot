@@ -1,8 +1,10 @@
-@import play.api.libs.ws.WSResponse ; var parsedResponse: Array[String] =null;
+@import play.api.libs.ws.WSResponse ; 	var parsedResponse: Array[String] =null;
+
+@import play.api.libs.json.JsValue
 
 
 
-@(chatMsg:String, autoResponse: WSResponse)(implicit request: RequestHeader, m: Messages)
+@(chatMsg:String, autoResponse: JsValue)(implicit request: RequestHeader, m: Messages)
 
 
 
@@ -40,11 +42,11 @@
 	<dd>
 	
     <div class=commentblock>
-    	<div style="white-space: pre-line" class=comment>me: @chatMsg </div>
+    	<div style="white-space: pre-line" class="comment sentiment-@parsedResponse(2)">me: @chatMsg </div>
     </div>
     <br/>
    	<div class=commentblock >
-    	<div style="white-space: pre-line" class=comment>chatbot: @parsedResponse(0) </div>
+    	<div style="white-space: pre-line" class="comment" >chatbot: @parsedResponse(0) </div>
     	@if(parsedResponse(1)!=null) {
     		<img src="@parsedResponse(1)"  style="height:228px;">
     	}
@@ -54,9 +56,11 @@
  	
 } 
 
-@parseWSResponse(wsResponse: WSResponse)  = @{
-	val imgURLSeq = wsResponse.json \ "result" \ "fulfillment" \ "messages" \\ "image"
+@parseWSResponse(wsResponse: JsValue)  = @{
+	val imgURLSeq = wsResponse \ "response" \ "result" \ "fulfillment" \ "messages" \\ "image"
     val imgURL = { if (imgURLSeq.length == 1) { imgURLSeq(0).as[String] } else { null } }
-    val chatResponse = (( wsResponse.json \ "result" \ "fulfillment" \ "speech").as[String])
-    Array(chatResponse, imgURL)
+    val chatResponse = (( wsResponse \ "response" \ "result" \ "fulfillment" \ "speech").as[String])
+    val sentiment = (( wsResponse \ "sentiment" \ "label").as[String])
+
+    Array(chatResponse, imgURL, sentiment)
 }

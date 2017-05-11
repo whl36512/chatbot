@@ -17,6 +17,7 @@ import scala.util.Random
 import play.api.libs.json._
 import play.api.libs.json.Reads._ // Custom validation helpers
 import play.api.libs.functional.syntax._ // Combinator syntax
+import play.api.libs.ws.WSResponse
 
 /**
  * This controller creates an `Action` that demonstrates how to write
@@ -60,16 +61,12 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
       case qs => {
         val queryString = qs.get.map { case (k, v) => (k, v(0)) } // get form data from POST
         chatMsg = queryString("chatMsg")
-        Logger.info("INFO 20170424204601 chatMsg=" + chatMsg)
+        Logger.info("INFO 20170424204601 sessionId=" + sessionId + " chatMsg=" + chatMsg)
+        val formInJson = Json.obj("sessionId" -> sessionId, "chatMsg" -> chatMsg)
 
-        var req: WSRequest = ws.url(apiAiUrl)
-        Logger.info("INFO 20170424084701 sessionId=" + sessionId + " req = " + req.url)
-        req = req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
-        Logger.info("INFO 20170424204901 req=" + req.toString())
-        val futureResponse = req.get()
-        futureResponse.map(wsResponse => {
-          Ok(views.html.chat.POC(chatMsg, wsResponse)).withSession(request.session + ("sessionId" -> sessionId))
-        })
+        callMultipleWS(formInJson).map { combinedResponse =>
+          Ok(views.html.chat.POC(chatMsg, combinedResponse)).withSession(request.session + ("sessionId" -> sessionId))
+        }
       }
     }
   }
@@ -79,20 +76,43 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     (JsPath \ 'sessionId).read[String]) tupled
 
   def chatws = Action.async(parse.json) { implicit request =>
-    val a=  request.body.validate[(String, String)]
-    a.map{ 
-      case (chatMsg, sessionId) =>
-        Logger.info("INFO 20170509220301 sessionId=" + sessionId + " chatMsg= " + chatMsg)
-        var req: WSRequest = ws.url(apiAiUrl)
-        req=req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
-                Logger.info("INFO 20170424204901 req=" + req.toString())
-        val futureResponse = req.get()
-        futureResponse.map(wsResponse =>
-          Ok(wsResponse.json)
-        )      
-    }.recoverTotal{
-      e => Future{BadRequest("ERROR 20170509215901 " + JsError.toJson(e))}
+    callMultipleWS(request.body).map { combinedResponse =>
+      Ok(combinedResponse)
     }
+  }
+
+  def getBotResponse(sessionId: String, chatMsg: String) = {
+    Logger.info("INFO 20170510140001 sessionId=" + sessionId + " chatMsg= " + chatMsg)
+
+    var req: WSRequest = ws.url(apiAiUrl)
+    req = req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
+    Logger.info("INFO 20170510204901 req=" + req.toString())
+    req.get
+  }
+
+  def sentiment(msg: String) =
+    {
+      // curl -d "text=great" http://text-processing.com/api/sentiment/
+      val url = "http://text-processing.com/api/sentiment/"
+      ws.url(url).post(Map("text" -> Seq(msg)))
+    }
+
+  def callMultipleWS(requestBody: JsValue) = {
+    val jsResult = requestBody.validate[(String, String)]
+    jsResult.map {
+      case (chatMsg, sessionId) =>
+        val futureResponse = getBotResponse(sessionId, chatMsg)
+        val futureSentiment = sentiment(chatMsg)
+
+        val combined = for { // combine two futured using for comprehension
+          a: WSResponse <- futureResponse
+          b: WSResponse <- futureSentiment
+        } yield (Json.obj("request" -> requestBody, "response" -> a.json, "sentiment" -> b.json))
+        combined
+    }.recoverTotal {
+      e => Future { JsError.toJson(e) }
+    }
+
   }
 }
 
