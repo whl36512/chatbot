@@ -17,11 +17,19 @@ import play.api.mvc.RequestHeader
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 
-//import play.api.libs.ws.WSRequest
-//import play.api.libs.ws.WSClient
-//import scala.concurrent.ExecutionContext
-//import scala.concurrent.ExecutionContext.Implicits.global
-//import scala.concurrent.Await
+case class Termination (var terminationDate: String) {
+  def existingTerminationDate(db: Database with SQLResultTrait) = {
+    db("select * from termination", Array())
+  }
+  def updateTerminationDate(db: Database with SQLResultTrait) = db("update termination set termination_date=?", Array(terminationDate))
+}
+
+object Test1 {
+  val a = new Termination("")
+  val db:Database with SQLResultTrait= null
+  a.terminationDate =  (a.existingTerminationDate(db))(0).getOrElse("termination_date", "2017-12-31")
+}
+
 
 case class Link(linkId: String = "", topicId: String = "", title: String = "", publishTS: String = "", createTS: String = "", author: String = "", url: String = "", commentCnt: Int = 0, language: String = "english") {
   // link_id    
@@ -32,7 +40,7 @@ case class Link(linkId: String = "", topicId: String = "", title: String = "", p
   // author     
   // url      
   // language
-  def saveTo(db: Database): ArrayBuffer[Map[String, String]] = {
+  def saveTo(db: Database with SQLResultTrait): ArrayBuffer[Map[String, String]] = {
     try {
       val urlObj = new URL(url)
       None

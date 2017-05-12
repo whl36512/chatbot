@@ -40,6 +40,11 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
    * will be called when the application receives a `GET` request with
    * a path of `/message`.
    */
+
+  //curl 'https://api.api.ai/api/query?v=20150910&query=used&lang=en&sessionId=94148e79-af15-4460-801d-309dabcf66e4&timezone=2017-05-11T14:59:51-0500' -H 'Authorization:Bearer f41377e7b136496c9b6381ced9012be7'
+  val apiAiBearer = "f41377e7b136496c9b6381ced9012be7" //DaimlerFS
+  //  val apiAiBearer ="0ed97d1c6c13484fa3f51cb56be95c85"     //zalora
+
   def message = Action.async {
     getFutureMessage(1.second).map { msg => Ok(msg) }
   }
@@ -77,6 +82,9 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
 
   def chatws = Action.async(parse.json) { implicit request =>
     callMultipleWS(request.body).map { combinedResponse =>
+      Logger.info("INFO 20170510212101 combinedResponse=" + combinedResponse.toString)
+      //val contextSeq= getContext(combinedResponse)
+
       Ok(combinedResponse)
     }
   }
@@ -85,17 +93,16 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     Logger.info("INFO 20170510140001 sessionId=" + sessionId + " chatMsg= " + chatMsg)
 
     var req: WSRequest = ws.url(apiAiUrl)
-    req = req.withHeaders("Authorization" -> "Bearer 0ed97d1c6c13484fa3f51cb56be95c85").withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
+    req = req.withHeaders("Authorization" -> ("Bearer " + apiAiBearer)).withQueryString(("v", "20150910"), ("lang", "en"), ("sessionId", sessionId), ("query", chatMsg))
     Logger.info("INFO 20170510204901 req=" + req.toString())
     req.get
   }
 
-  def sentiment(msg: String) =
-    {
-      // curl -d "text=great" http://text-processing.com/api/sentiment/
-      val url = "http://text-processing.com/api/sentiment/"
-      ws.url(url).post(Map("text" -> Seq(msg)))
-    }
+  def sentiment(msg: String) = {
+    // curl -d "text=great" http://text-processing.com/api/sentiment/
+    val url = "http://text-processing.com/api/sentiment/"
+    ws.url(url).post(Map("text" -> Seq(msg)))
+  }
 
   def callMultipleWS(requestBody: JsValue) = {
     val jsResult = requestBody.validate[(String, String)]
@@ -105,14 +112,29 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
         val futureSentiment = sentiment(chatMsg)
 
         val combined = for { // combine two futured using for comprehension
-          a: WSResponse <- futureResponse
-          b: WSResponse <- futureSentiment
-        } yield (Json.obj("request" -> requestBody, "response" -> a.json, "sentiment" -> b.json))
+          chatResponse: WSResponse <- futureResponse
+          sentiment: WSResponse <- futureSentiment
+        } yield {
+          val actionResult = execChatAction(chatResponse.json)
+          Json.obj("request" -> requestBody, "response" -> chatResponse.json, "sentiment" -> sentiment.json)
+        }
         combined
     }.recoverTotal {
       e => Future { JsError.toJson(e) }
     }
+  }
 
+  def execChatAction(chatResponse: JsValue) = {
+    val chatAction = (chatResponse \ "result" \ "action").as[String]
+    chatAction match {
+      case "checkTerminationDate" => checkTerminationDate(chatResponse)
+      case action                 => TODO
+    }
+  }
+
+  def checkTerminationDate(chatResponse: JsValue) = {
+    val requestedTerminationDate = (chatResponse \ "result" \ "parameters" \ "terminationDate" ).as[String]
+    Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate.toString)
   }
 }
 
