@@ -18,6 +18,7 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._ // Custom validation helpers
 import play.api.libs.functional.syntax._ // Combinator syntax
 import play.api.libs.ws.WSResponse
+import play.api.cache.CacheApi
 
 /**
  * This controller creates an `Action` that demonstrates how to write
@@ -30,7 +31,7 @@ import play.api.libs.ws.WSResponse
  * asynchronous code.
  */
 @Singleton
-class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: ExecutionContext, implicit val messagesApi: MessagesApi, implicit val ws: WSClient) extends Controller with I18nSupport {
+class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: ExecutionContext, implicit val messagesApi: MessagesApi, implicit val ws: WSClient,  implicit val cache: CacheApi) extends Controller with I18nSupport {
 
   /**
    * Create an Action that returns a plain text message after a delay
@@ -134,7 +135,15 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
 
   def checkTerminationDate(chatResponse: JsValue) = {
     val requestedTerminationDate = (chatResponse \ "result" \ "parameters" \ "terminationDate" ).as[String]
-    Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate.toString)
+    Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate)
+    requestedTerminationDate match {
+      case "" => Json.obj()
+      case requestedTerminationDate => {
+        
+      }
+      
+    }
+    
   }
 }
 
