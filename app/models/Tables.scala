@@ -17,18 +17,24 @@ import play.api.mvc.RequestHeader
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 
-case class Termination (var terminationDate: String) {
-  def existingTerminationDate(db: Database with SQLResultTrait) = {
-    db("select * from termination", Array())
+case class Termination (terminationDate: String) {
+  def updateTerminationDate(db: Database) = {
+    SQLResult(db, "update termination set termination_date=?::date returning 'Termination date is changed to ' || termination_date ||'.' as ret ", Array(terminationDate))(0).getOrElse("ret", "Failed to change termination date.")
   }
-  def updateTerminationDate(db: Database with SQLResultTrait) = db("update termination set termination_date=?", Array(terminationDate))
+}
+
+object Termination
+{
+  def existingTerminationDate(db: Database) = {
+    val dbt = db.asInstanceOf[Database with SQLResultTrait]
+    SQLResult(db, "select termination_date from termination", Array())(0).getOrElse("termination_date", "2017-12-31")
+  }
 }
 
 object Test1 {
-  val a = new Termination("")
   val db:Database with SQLResultTrait= null
-  a.terminationDate =  (a.existingTerminationDate(db))(0).getOrElse("termination_date", "2017-12-31")
-}
+  val a = Termination(Termination.existingTerminationDate(db))
+  }
 
 
 case class Link(linkId: String = "", topicId: String = "", title: String = "", publishTS: String = "", createTS: String = "", author: String = "", url: String = "", commentCnt: Int = 0, language: String = "english") {

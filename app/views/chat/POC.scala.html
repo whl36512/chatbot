@@ -14,7 +14,7 @@
 <form action="/chat" method="POST" >
     
 <dl>
-    <dt><label for="title">Chat Message</label></dt>
+    <dt><label for="title">Chat Message (type "start over" if the conversation goes awry)</label></dt>
     <dd>
     	<input type=text id="chatMsg" rows="8" name="chatMsg" value="" placeholder="Chat message" /> 
     	<br/>
@@ -61,6 +61,7 @@
     val imgURL = { if (imgURLSeq.length == 1) { imgURLSeq(0).as[String] } else { null } }
     val chatResponse = (( wsResponse \ "response" \ "result" \ "fulfillment" \ "speech").as[String])
     val sentiment = (( wsResponse \ "sentiment" \ "label").as[String])
+    val actionResult = (( wsResponse \ "actionResult" \ "speech").as[String])
 
-    Array(chatResponse, imgURL, sentiment)
+    Array(chatResponse+ " " + actionResult , imgURL, sentiment)
 }

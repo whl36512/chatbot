@@ -20,6 +20,9 @@ import play.api.libs.functional.syntax._ // Combinator syntax
 import play.api.libs.ws.WSResponse
 import play.api.cache.CacheApi
 
+import models._
+import play.api.db.Database
+
 /**
  * This controller creates an `Action` that demonstrates how to write
  * simple asynchronous code in a controller. It uses a timer to
@@ -31,7 +34,7 @@ import play.api.cache.CacheApi
  * asynchronous code.
  */
 @Singleton
-class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: ExecutionContext, implicit val messagesApi: MessagesApi, implicit val ws: WSClient,  implicit val cache: CacheApi) extends Controller with I18nSupport {
+class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: ExecutionContext, implicit val messagesApi: MessagesApi, implicit val ws: WSClient, implicit val cache: CacheApi, implicit val db: Database) extends Controller with I18nSupport {
 
   /**
    * Create an Action that returns a plain text message after a delay
@@ -116,8 +119,8 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
           chatResponse: WSResponse <- futureResponse
           sentiment: WSResponse <- futureSentiment
         } yield {
-          val actionResult = execChatAction(chatResponse.json)
-          Json.obj("request" -> requestBody, "response" -> chatResponse.json, "sentiment" -> sentiment.json)
+          val chatActionResult = execChatAction(chatResponse.json)
+          Json.obj("request" -> requestBody, "response" -> chatResponse.json, "sentiment" -> sentiment.json, "actionResult" -> chatActionResult )
         }
         combined
     }.recoverTotal {
@@ -128,22 +131,44 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
   def execChatAction(chatResponse: JsValue) = {
     val chatAction = (chatResponse \ "result" \ "action").as[String]
     chatAction match {
-      case "checkTerminationDate" => checkTerminationDate(chatResponse)
-      case action                 => TODO
+      case "checkTerminationDate"  => checkTerminationDate(chatResponse, db)
+      case "changeTerminationDate" => updateTerminationDate(chatResponse, db)
+      case action                  => emptyActionResult
     }
   }
 
-  def checkTerminationDate(chatResponse: JsValue) = {
-    val requestedTerminationDate = (chatResponse \ "result" \ "parameters" \ "terminationDate" ).as[String]
+  val emptyActionResult = Json.obj("speech" -> "")
+
+  def checkTerminationDate(chatResponse: JsValue, db: Database) = {
+    val requestedTerminationDate = (chatResponse \ "result" \ "parameters" \ "requestedTerminationDate").as[String]
     Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate)
     requestedTerminationDate match {
-      case "" => Json.obj()
+      case "" =>  Json.obj("requestedTerminationDate" -> "", "speech" -> "", "success" -> "no")
       case requestedTerminationDate => {
-        
+        val existingTermination = Termination(Termination.existingTerminationDate(db))
+        Logger.info("INFO 20170512094702 existingTermination" + existingTermination)
+        val actionResultJson = Json.obj("existingTerminationDate" -> existingTermination.terminationDate, "speech" -> ("Existing termination date is " + existingTermination.terminationDate + ". Do you want to change it?"), "success" -> "yes")
+        Logger.info("INFO 20170512094703 existingTermination" + actionResultJson)
+        actionResultJson
       }
-      
     }
-    
+  }
+
+  def updateTerminationDate(chatResponse: JsValue, db: Database) = {
+    val requestedTerminationDate = (chatResponse \\ "requestedTerminationDate")(0).as[String]
+    Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate)
+    requestedTerminationDate match {
+      case "" => Json.obj("requestedTerminationDate" -> "", "speech" -> "Termination date is not changed.", "success" -> "no")
+      case requestedTerminationDate => {
+        val requestedTermination = Termination(requestedTerminationDate)
+        val returnedSpeech = requestedTermination.updateTerminationDate(db)
+        Logger.info("INFO 20170512094701 returnedSpeech" + returnedSpeech)
+
+        val actionResultJson =  Json.obj("requestedTerminationDate" -> requestedTerminationDate, "speech" -> returnedSpeech, "success" -> "yes")
+        Logger.info("INFO 20170512095001 actionResultJson" + actionResultJson)
+        actionResultJson
+      }
+    }
   }
 }
 
