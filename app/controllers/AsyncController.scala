@@ -62,21 +62,34 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
   val apiAiUrl = "https://api.api.ai/api/query"
 
   def chat = Action.async { implicit request =>
-    val queryString = request.body.asFormUrlEncoded
-    val sessionId = request.session.get("sessionId").getOrElse(DigestUtils.md5Hex(Random.nextLong.toHexString))
-    var chatMsg = ""
-    queryString match {
-      case None => Future { Ok(views.html.chat.POC(chatMsg, null)).withSession(request.session + ("sessionId" -> sessionId)) }
-      case qs => {
-        val queryString = qs.get.map { case (k, v) => (k, v(0)) } // get form data from POST
-        chatMsg = queryString("chatMsg")
-        Logger.info("INFO 20170424204601 sessionId=" + sessionId + " chatMsg=" + chatMsg)
-        val formInJson = Json.obj("sessionId" -> sessionId, "chatMsg" -> chatMsg)
+    try {
+      val queryString = request.body.asFormUrlEncoded
+      val sessionId = request.session.get("sessionId").getOrElse(DigestUtils.md5Hex(Random.nextLong.toHexString))
+      var chatMsg = ""
+      queryString match {
+        case None => Future { Ok(views.html.chat.POC(chatMsg, null)).withSession(request.session + ("sessionId" -> sessionId)) }
+        case qs => {
+          val queryString = qs.get.map { case (k, v) => (k, v(0)) } // get form data from POST
+          chatMsg = queryString("chatMsg")
+          Logger.info("INFO 20170424204601 sessionId=" + sessionId + " chatMsg=" + chatMsg)
+          chatMsg match {
+            case "" => Future { BadRequest("400 Bad Request") }
+            case chatMsg => {
 
-        callMultipleWS(formInJson).map { combinedResponse =>
-          Ok(views.html.chat.POC(chatMsg, combinedResponse)).withSession(request.session + ("sessionId" -> sessionId))
+              val formInJson = Json.obj("sessionId" -> sessionId, "chatMsg" -> chatMsg)
+
+              callMultipleWS(formInJson).map { combinedResponse =>
+                Ok(views.html.chat.POC(chatMsg, combinedResponse)).withSession(request.session + ("sessionId" -> sessionId))
+              }
+            }
+          }
         }
       }
+    } catch {
+      case e: Throwable =>
+        Logger.error("ERROR 20170512152702 " + e)
+        Future { BadRequest("400 Bad Request") }
+
     }
   }
 
@@ -85,11 +98,17 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     (JsPath \ 'sessionId).read[String]) tupled
 
   def chatws = Action.async(parse.json) { implicit request =>
-    callMultipleWS(request.body).map { combinedResponse =>
-      Logger.info("INFO 20170510212101 combinedResponse=" + combinedResponse.toString)
-      //val contextSeq= getContext(combinedResponse)
+    try {
+      callMultipleWS(request.body).map { combinedResponse =>
+        Logger.info("INFO 20170510212101 combinedResponse=" + combinedResponse.toString)
+        //val contextSeq= getContext(combinedResponse)
 
-      Ok(combinedResponse)
+        Ok(combinedResponse)
+      }
+    } catch {
+      case e: Throwable =>
+        Logger.error("ERROR 20170512152701 " + e)
+        Future { BadRequest("400 Bad Request") }
     }
   }
 
@@ -119,8 +138,13 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
           chatResponse: WSResponse <- futureResponse
           sentiment: WSResponse <- futureSentiment
         } yield {
+          Logger.info("INFO 20170512135601 chatResponse.json=" + chatResponse.json)
+          Logger.info("INFO 20170512135602 sentiment.json=" + sentiment)
+
           val chatActionResult = execChatAction(chatResponse.json)
-          Json.obj("request" -> requestBody, "response" -> chatResponse.json, "sentiment" -> sentiment.json, "actionResult" -> chatActionResult )
+          val combinedJson = Json.obj("request" -> requestBody, "response" -> chatResponse.json, "sentiment" -> sentiment.json, "actionResult" -> chatActionResult)
+          Logger.info("INFO 20170512130601 combinedJson=" + combinedJson)
+          combinedJson
         }
         combined
     }.recoverTotal {
@@ -129,25 +153,30 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
   }
 
   def execChatAction(chatResponse: JsValue) = {
-    val chatAction = (chatResponse \ "result" \ "action").as[String]
-    chatAction match {
-      case "checkTerminationDate"  => checkTerminationDate(chatResponse, db)
-      case "changeTerminationDate" => updateTerminationDate(chatResponse, db)
-      case action                  => emptyActionResult
+    (chatResponse \ "status" \ "code").as[Int] match {
+      case 200 =>
+        val chatAction = (chatResponse \ "result" \ "action").as[String]
+        chatAction match {
+          case "checkTerminationDate"  => checkTerminationDate(chatResponse, db)
+          case "changeTerminationDate" => updateTerminationDate(chatResponse, db)
+          case action                  => emptyActionResult
+        }
+      case s => emptyActionResult //bad request
+
     }
   }
 
-  val emptyActionResult = Json.obj("speech" -> "")
+  val emptyActionResult = Json.obj("speech" -> "", "success" -> "no")
 
   def checkTerminationDate(chatResponse: JsValue, db: Database) = {
     val requestedTerminationDate = (chatResponse \ "result" \ "parameters" \ "requestedTerminationDate").as[String]
     Logger.info("INFO 20170511223701 requestedTerminationDate=" + requestedTerminationDate)
     requestedTerminationDate match {
-      case "" =>  Json.obj("requestedTerminationDate" -> "", "speech" -> "", "success" -> "no")
+      case "" => emptyActionResult
       case requestedTerminationDate => {
         val existingTermination = Termination(Termination.existingTerminationDate(db))
         Logger.info("INFO 20170512094702 existingTermination" + existingTermination)
-        val actionResultJson = Json.obj("existingTerminationDate" -> existingTermination.terminationDate, "speech" -> ("Existing termination date is " + existingTermination.terminationDate + ". Do you want to change it?"), "success" -> "yes")
+        val actionResultJson = Json.obj("existingTerminationDate" -> existingTermination.terminationDate, "speech" -> ("The existing termination date is " + existingTermination.terminationDate +"."), "success" -> "yes")
         Logger.info("INFO 20170512094703 existingTermination" + actionResultJson)
         actionResultJson
       }
@@ -164,7 +193,7 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
         val returnedSpeech = requestedTermination.updateTerminationDate(db)
         Logger.info("INFO 20170512094701 returnedSpeech" + returnedSpeech)
 
-        val actionResultJson =  Json.obj("requestedTerminationDate" -> requestedTerminationDate, "speech" -> returnedSpeech, "success" -> "yes")
+        val actionResultJson = Json.obj("requestedTerminationDate" -> requestedTerminationDate, "speech" -> returnedSpeech, "success" -> "yes")
         Logger.info("INFO 20170512095001 actionResultJson" + actionResultJson)
         actionResultJson
       }

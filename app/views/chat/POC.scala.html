@@ -57,11 +57,22 @@
 } 
 
 @parseWSResponse(wsResponse: JsValue)  = @{
+	val empty = Array("" , null, "neutral")
+	try {
 	val imgURLSeq = wsResponse \ "response" \ "result" \ "fulfillment" \ "messages" \\ "image"
     val imgURL = { if (imgURLSeq.length == 1) { imgURLSeq(0).as[String] } else { null } }
+    
     val chatResponse = (( wsResponse \ "response" \ "result" \ "fulfillment" \ "speech").as[String])
     val sentiment = (( wsResponse \ "sentiment" \ "label").as[String])
     val actionResult = (( wsResponse \ "actionResult" \ "speech").as[String])
 
     Array(chatResponse+ " " + actionResult , imgURL, sentiment)
+    }
+    catch {
+    	case e: Exception => empty
+    }
+    finally
+    {
+    	empty
+    }
 }
