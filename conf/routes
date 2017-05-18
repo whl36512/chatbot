@@ -17,7 +17,7 @@ GET     /message                    controllers.AsyncController.message
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 
-GET     /chat                   		controllers.AsyncController.chat
-POST    /chat                   		controllers.AsyncController.chat
-POST    /chat/ws                   		controllers.AsyncController.chatws
+GET     /chat/demo/:client                   		controllers.AsyncController.chat(client:String)
+POST    /chat/demo/:client                   		controllers.AsyncController.chat(client:String)
+POST    /chat/ws/:client                   			controllers.AsyncController.chatws(client:String)
 

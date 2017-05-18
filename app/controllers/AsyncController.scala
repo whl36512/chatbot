@@ -46,8 +46,6 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
    */
 
   //curl 'https://api.api.ai/api/query?v=20150910&query=used&lang=en&sessionId=94148e79-af15-4460-801d-309dabcf66e4&timezone=2017-05-11T14:59:51-0500' -H 'Authorization:Bearer f41377e7b136496c9b6381ced9012be7'
-  val apiAiBearer = "f41377e7b136496c9b6381ced9012be7" //DaimlerFS
-  //  val apiAiBearer ="0ed97d1c6c13484fa3f51cb56be95c85"     //zalora
 
   def message = Action.async {
     getFutureMessage(1.second).map { msg => Ok(msg) }
@@ -61,7 +59,21 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
 
   val apiAiUrl = "https://api.api.ai/api/query"
 
-  def chat = Action.async { implicit request =>
+  def getBearer(client: String) = {
+    val apiAiBearerD = "f41377e7b136496c9b6381ced9012be7" //DaimlerFS
+    val apiAiBearerZ = "0ed97d1c6c13484fa3f51cb56be95c85" //zalora
+
+    client match {
+      case "z" => apiAiBearerZ
+      case "d" => apiAiBearerD
+      case c   => apiAiBearerD
+    }
+  }
+
+  def chat(client: String) = Action.async { implicit request =>
+
+    val apiAiBearer = getBearer(client)
+
     try {
       val queryString = request.body.asFormUrlEncoded
       val sessionId = request.session.get("sessionId").getOrElse(DigestUtils.md5Hex(Random.nextLong.toHexString))
@@ -78,7 +90,7 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
 
               val formInJson = Json.obj("sessionId" -> sessionId, "chatMsg" -> chatMsg)
 
-              callMultipleWS(formInJson).map { combinedResponse =>
+              callMultipleWS(formInJson, apiAiBearer).map { combinedResponse =>
                 Ok(views.html.chat.POC(chatMsg, combinedResponse)).withSession(request.session + ("sessionId" -> sessionId))
               }
             }
@@ -97,9 +109,10 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     (JsPath \\ 'chatMsg).read[String] and
     (JsPath \ 'sessionId).read[String]) tupled
 
-  def chatws = Action.async(parse.json) { implicit request =>
+  def chatws(client: String) = Action.async(parse.json) { implicit request =>
+    val apiAiBearer = getBearer(client)
     try {
-      callMultipleWS(request.body).map { combinedResponse =>
+      callMultipleWS(request.body, apiAiBearer).map { combinedResponse =>
         Logger.info("INFO 20170510212101 combinedResponse=" + combinedResponse.toString)
         //val contextSeq= getContext(combinedResponse)
 
@@ -112,7 +125,7 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     }
   }
 
-  def getBotResponse(sessionId: String, chatMsg: String) = {
+  def getBotResponse(sessionId: String, chatMsg: String, apiAiBearer: String) = {
     Logger.info("INFO 20170510140001 sessionId=" + sessionId + " chatMsg= " + chatMsg)
 
     var req: WSRequest = ws.url(apiAiUrl)
@@ -127,11 +140,11 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
     ws.url(url).post(Map("text" -> Seq(msg)))
   }
 
-  def callMultipleWS(requestBody: JsValue) = {
+  def callMultipleWS(requestBody: JsValue, apiAiBearer: String) = {
     val jsResult = requestBody.validate[(String, String)]
     jsResult.map {
       case (chatMsg, sessionId) =>
-        val futureResponse = getBotResponse(sessionId, chatMsg)
+        val futureResponse = getBotResponse(sessionId, chatMsg, apiAiBearer)
         val futureSentiment = sentiment(chatMsg)
 
         val combined = for { // combine two futured using for comprehension
@@ -176,7 +189,7 @@ class AsyncController @Inject() (actorSystem: ActorSystem)(implicit exec: Execut
       case requestedTerminationDate => {
         val existingTermination = Termination(Termination.existingTerminationDate(db))
         Logger.info("INFO 20170512094702 existingTermination" + existingTermination)
-        val actionResultJson = Json.obj("existingTerminationDate" -> existingTermination.terminationDate, "speech" -> ("The existing termination date is " + existingTermination.terminationDate +"."), "success" -> "yes")
+        val actionResultJson = Json.obj("existingTerminationDate" -> existingTermination.terminationDate, "speech" -> ("The existing termination date is " + existingTermination.terminationDate + "."), "success" -> "yes")
         Logger.info("INFO 20170512094703 existingTermination" + actionResultJson)
         actionResultJson
       }

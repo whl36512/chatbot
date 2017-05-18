@@ -11,7 +11,7 @@
 
 @main("ChatBot POC") {
 
-<form action="/chat" method="POST" >
+<form action="" method="POST" >
     
 <dl>
     <dt><label for="title">Chat Message (type "start over" if the conversation goes awry)</label></dt>
@@ -70,9 +70,5 @@
     }
     catch {
     	case e: Exception => empty
-    }
-    finally
-    {
-    	empty
     }
 }
